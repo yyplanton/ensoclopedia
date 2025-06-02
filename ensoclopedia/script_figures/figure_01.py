@@ -197,7 +197,7 @@ defaults = {
             },
             "panel_d": {
                 "legend_position": None,
-                "map_c_cbar": "cmo.balance",
+                "map_c_cbar": "cmo.diff_r",
                 "map_c_land": None,
                 "map_c_nam": "attribute--map_c_nam",
                 "map_c_tic": list(range(-100, 101, 50)),
@@ -208,7 +208,7 @@ defaults = {
             },
             "panel_e": {
                 "legend_position": "bottom",
-                "map_c_cbar": "cmo.balance",
+                "map_c_cbar": "cmo.diff_r",
                 "map_c_land": None,
                 # "map_c_nam": {"f01e--map_c": "map_c_nam"},
                 "map_c_nam": "ENSO influence on PR (%)",
