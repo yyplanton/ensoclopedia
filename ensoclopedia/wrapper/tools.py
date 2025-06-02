@@ -30,6 +30,28 @@ class BackgroundColors:
 # Functions
 # ---------------------------------------------------------------------------------------------------------------------#
 def default_figure_format(figure: dict) -> Literal["eps", "pdf", "png", "svg"]:
+    """
+    Read or return default output figure format.
+    Input:
+    ------
+    :param figure: dict
+        Dictionary to plot a figure;
+        e.g., figure = {
+            'filename': '/path/to/filename',
+            'format': 'pdf',
+            'panel_size': {
+                'frac': {'x': float, 'y': float},
+                'panel_a': {'x_delt': int, 'x_size': int, 'y_delt': int, 'y_size': int},
+                **other_panels
+            },
+            **other_keys
+        }
+
+    Output:
+    -------
+    :return: {"eps", "pdf", "png", "svg"}
+        Output figure format
+    """
     # define figure name
     figure_format = "pdf"
     if isinstance(figure, dict) is True and "format" in list(figure.keys()) and \
@@ -39,6 +61,31 @@ def default_figure_format(figure: dict) -> Literal["eps", "pdf", "png", "svg"]:
 
 
 def default_figure_name(figure: dict, filename: str) -> str:
+    """
+    Read or create output figure name.
+
+    Input:
+    ------
+    :param figure: dict
+        Dictionary to plot a figure;
+        e.g., figure = {
+            'filename': '/path/to/filename',
+            'format': 'pdf',
+            'panel_size': {
+                'frac': {'x': float, 'y': float},
+                'panel_a': {'x_delt': int, 'x_size': int, 'y_delt': int, 'y_size': int},
+                **other_panels
+            },
+            **other_keys
+        }
+    :param filename: str
+        __file__ from the figure script
+
+    Output:
+    -------
+    :return: str
+        Path and filename for output figure
+    """
     # define figure name
     if isinstance(figure, dict) is True and "filename" in list(figure.keys()) and \
             isinstance(figure["filename"], str) is True:
@@ -52,7 +99,40 @@ def default_figure_name(figure: dict, filename: str) -> str:
     return figure_name
 
 
-def default_panel_sizes(figure):
+def default_panel_sizes(figure: dict, figure_data: dict) -> dict[str: dict[str, Union[float, int]]]:
+    """
+    Read, fill or create panel_size dictionary (required to plot figures) with default values is needed.
+
+    Input:
+    ------
+    :param figure: dict
+        Dictionary to plot a figure;
+        e.g., figure = {
+            'filename': '/path/to/filename',
+            'format': 'pdf',
+            'panel_size': {
+                'frac': {'x': float, 'y': float},
+                'panel_a': {'x_delt': int, 'x_size': int, 'y_delt': int, 'y_size': int},
+                **other_panels
+            },
+            **other_keys
+        }
+    :param figure_data: dict
+        Dictionary of the data that will be plotted;
+        e.g., figure_data = {
+            'group_1': {
+                'panel_a': {},
+                **other_panels
+            },
+            **other_groups
+        }
+
+    Output:
+    -------
+    :return: dict[str: dict[str, Union[float, int]]]
+        Dictionary of panel_size, either from figure if it was provided, or completed if the one in figure was not
+        complete or default panel_size dictionary
+    """
     # default values
     default = {
         "frac": {"x": 1, "y": 1},
@@ -63,13 +143,22 @@ def default_panel_sizes(figure):
     if isinstance(figure, dict) is True and "panel_size" in list(figure.keys()) and \
             isinstance(figure["panel_size"], dict) is True:
         panel_size = figure["panel_size"]
-    # fill missing values
+    # add frac if needed
     if "frac" not in list(panel_size.keys()):
         panel_size["frac"] = default["frac"]
     else:
-        for k in list(default["frac"].keys()):
-            if k not in list(panel_size["frac"].keys()):
-                put_in_dict(panel_size, default["frac"][k], "frac", k)
+        for k1, k2 in default["frac"].items():
+            if k1 not in list(panel_size["frac"].keys()):
+                put_in_dict(panel_size, k2, "frac", k1)
+    # add panel if needed
+    for grp in list(figure_data.keys()):
+        for pan in list(figure_data[grp].keys()):
+            if pan not in list(panel_size.keys()):
+                panel_size[pan] = default["panel"]
+            else:
+                for k1, k2 in default["panel"].items():
+                    if k1 not in list(panel_size[pan].keys()):
+                        put_in_dict(panel_size, k2, pan, k1)
     return panel_size
 
 

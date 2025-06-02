@@ -8,7 +8,7 @@
 # Import packages
 # ---------------------------------------------------#
 # basic python package
-from typing import Any, Literal, Union, Hashable
+from typing import Union
 
 # xarray
 import xarray

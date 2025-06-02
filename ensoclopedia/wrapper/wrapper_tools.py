@@ -13,7 +13,6 @@ from typing import Union
 
 # local functions
 from ensoclopedia.wrapper import dataarray_tools as dt
-from ensoclopedia.wrapper import tools
 from ensoclopedia.wrapper import xarray_tools as xt
 from ensoclopedia.wrapper.tools import print_fail, unknown_formater
 from ensoclopedia.wrapper.xarray_tools import array_wrapper, dataset_wrapper

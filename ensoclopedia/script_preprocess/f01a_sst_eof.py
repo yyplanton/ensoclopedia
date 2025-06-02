@@ -9,7 +9,6 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
-from json import dumps as json__dumps
 
 # local functions
 from ensoclopedia.wrapper.tools import none_to_default_dict
@@ -93,16 +92,6 @@ def f01a_sst_eof_process(
     #
     # compute eof
     ds_eof = eofs(ds, **kwargs_eof)
-    # print("after eofs ds_eof")
-    # print(json__dumps(ds_eof.attrs, indent=4))
-    # print(list(ds_eof.keys()))
-    # for k in list(ds_eof.keys()):
-    #     print(str(k).rjust(10), ds_eof[k].shape)
-    #     print(json__dumps(ds_eof[k].attrs, indent=4))
-    # for k1 in list(ds_eof.coords):
-    #     print(str(k1).rjust(10), ds_eof[k1].shape)
-    #     for k2 in list(ds_eof[k1].attrs):
-    #         print(str(k2).rjust(20), ds_eof[k1].attrs[k2])
     #
     # -- Save in netCDF
     #

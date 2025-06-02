@@ -1,0 +1,11 @@
+Cartopy~=0.24.1
+cmocean~=4.0.3
+dask~=2025.5.1
+matplotlib~=3.10.3
+netCDF4~=1.7.2
+numpy~=2.2.6
+pandas~=2.2.3
+xeofs~=3.0.4
+xarray~=2025.4.0
+scipy~=1.15.3
+sh~=2.2.2

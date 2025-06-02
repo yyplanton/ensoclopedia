@@ -9,7 +9,6 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
-from json import dumps as json__dumps
 
 # local functions
 from ensoclopedia.wrapper.dataarray_tools import linear_regression
@@ -70,13 +69,14 @@ defaults = {
         "filename": "data_output/figure_01d.nc",
         "kwargs_to_netcdf": {},
         "variable": {
-            "slope": {
+            "sst--precip": {
                 "name": "f01d--map_c",
                 "attributes": {
                     "short_name": "slope",
                     "units": "%",
                     "map_c_nam": "JJA PR change regressed on normalized NDJ N3.4 rSSTA (UNITS)",
                 },
+                "variable": "slope",
             },
         },
     },
@@ -111,103 +111,27 @@ def f01d_pr_change_process(
     if isinstance(var1_data, dict) is True and "variable" in list(var1_data):
         variable_x = copy__deepcopy(var1_data["variable"])
     ds_x0 = netcdf_reader(**var1_data)
-    # print("after netcdf_reader ds_x0")
-    # print(json__dumps(ds_x0.attrs, indent=4))
-    # print(list(ds_x0.keys()))
-    # for k in list(ds_x0.keys()):
-    #     print(str(k).rjust(10), ds_x0[k].shape)
-    #     print(json__dumps(ds_x0[k].attrs, indent=4))
     variable_y = None
     if isinstance(var2_data, dict) is True and "variable" in list(var2_data):
         variable_y = copy__deepcopy(var2_data["variable"])
     ds_y0 = netcdf_reader(**var2_data)
-    for k1 in list(ds_y0.keys()):
-        for k2 in list(ds_y0[k1].attrs):
-            if k2 in ["actual_range", "add_offset", "precision", "scale_factor", "valid_range"]:
-                del ds_y0[k1].attrs[k2]
-    # print("after netcdf_reader ds_y0")
-    # print(json__dumps(ds_y0.attrs, indent=4))
-    # print(list(ds_y0.keys()))
-    # for k in list(ds_y0.keys()):
-    #     print(str(k).rjust(10), ds_y0[k].shape, ds_y0[k].dims)
-    #     print(json__dumps(ds_y0[k].attrs, indent=4))
-    # for k1 in list(ds_y0.coords):
-    #     print(str(k1).rjust(10), ds_y0[k1].shape)
-    #     print(str(k1).rjust(10), ds_y0[k1].values[:10])
-    #     for k2 in list(ds_y0[k1].attrs):
-    #         print(str(k2).rjust(20), ds_y0[k1].attrs[k2])
-    # stop
     #
     # -- Process
     #
     # perform processing steps for ds_x
     ds_x = processor(ds_x0, var1_preprocess, variable=variable_x)
-    # print("after processor ds_x")
-    # print(json__dumps(ds_x.attrs, indent=4))
-    # print(list(ds_x.keys()))
-    # for k in list(ds_x.keys()):
-    #     print(str(k).rjust(10), ds_x[k].shape)
-    #     print(ds_x[k]["year"])
-    #     print(json__dumps(ds_x[k].attrs, indent=4))
     # perform processing steps for ds_y
     ds_y1 = processor(ds_y0, var2_preprocess, variable=variable_y)
     ds_y2 = processor(ds_y0, var3_preprocess, variable=variable_y)
-    # print("after processor ds_y1")
-    # print(json__dumps(ds_y1.attrs, indent=4))
-    # print(list(ds_y1.keys()))
-    # for k in list(ds_y1.keys()):
-    #     print(str(k).rjust(10), ds_y1[k].shape)
-    #     print(ds_y1[k]["year"])
-    #     print(json__dumps(ds_y1[k].attrs, indent=4))
-    # for k1 in list(ds_y1.coords):
-    #     print(str(k1).rjust(10), ds_y1[k1].shape)
-    #     print(str(k1).rjust(10), ds_y1[k1].values[:10])
-    #     for k2 in list(ds_y1[k1].attrs):
-    #         print(str(k2).rjust(20), ds_y1[k1].attrs[k2])
-    # stop
-    # print("after processor ds_y2")
-    # print(json__dumps(ds_y2.attrs, indent=4))
-    # print(list(ds_y2.keys()))
-    # for k in list(ds_y2.keys()):
-    #     print(str(k).rjust(10), ds_y2[k].shape)
-    #     print(ds_y2[k]["year"])
-    #     print(json__dumps(ds_y2[k].attrs, indent=4))
-    # for k1 in list(ds_y2.coords):
-    #     print(str(k1).rjust(10), ds_y2[k1].shape)
-    #     for k2 in list(ds_y2[k1].attrs):
-    #         print(str(k2).rjust(20), ds_y2[k1].attrs[k2])
     ds_y = ds_y1 * 100 / ds_y2
-    # print("after processor ds_y")
-    # print(json__dumps(ds_y.attrs, indent=4))
-    # print(list(ds_y.keys()))
-    # for k in list(ds_y.keys()):
-    #     print(str(k).rjust(10), ds_y[k].shape)
-    #     print(ds_y[k]["year"])
-    #     print(json__dumps(ds_y[k].attrs, indent=4))
-    # for k1 in list(ds_y.coords):
-    #     print(str(k1).rjust(10), ds_y[k1].shape)
-    #     print(str(k1).rjust(10), ds_y[k1].values[:10])
-    #     for k2 in list(ds_y[k1].attrs):
-    #         print(str(k2).rjust(20), ds_y[k1].attrs[k2])
-    # stop
     #
     # -- Diagnostic
     #
     # regress ds_y onto ds_x
-    var_x, var_y = variable_x[0], variable_y[0]
-    ds_reg = linear_regression(ds_x[var_x], ds_y[var_y], dim="year")
-    # print("after linear_regression ds_reg")
-    # print(json__dumps(ds_reg.attrs, indent=4))
-    # print(list(ds_reg.keys()))
-    # for k in list(ds_reg.keys()):
-    #     print(str(k).rjust(10), ds_reg[k].shape)
-    #     print(str(k).rjust(10), ds_reg[k].dims)
-    #     print(json__dumps(ds_reg[k].attrs, indent=4))
-    # for k1 in list(ds_reg.coords):
-    #     print(str(k1).rjust(10), ds_reg[k1].shape)
-    #     for k2 in list(ds_reg[k1].attrs):
-    #         print(str(k2).rjust(20), ds_reg[k1].attrs[k2])
-    # stop
+    ds_reg = {}
+    for var_x in list(ds_x.keys()):
+        for var_y in list(ds_y.keys()):
+            ds_reg[str(var_x) + "--" + str(var_y)] = linear_regression(ds_x[var_x], ds_y[var_y], dim="year")
     #
     # -- Save in netCDF
     #
@@ -216,6 +140,8 @@ def f01d_pr_change_process(
     for var in list(output["variable"].keys()):
         # output array
         da = ds_reg[var]
+        if isinstance(da, dataset_wrapper) is True and "variable" in list(output["variable"][var].keys()):
+            da = da[output["variable"][var]["variable"]]
         # remove unused coordinates
         for k in list(set(list(da.coords.keys())) - set(da.dims)):
             del da[k]
@@ -229,7 +155,9 @@ def f01d_pr_change_process(
         # update attributes
         if "units" in list(att_v.keys()):
             for k1, k2 in att_v.items():
-                att_v[k1] = k2.replace(" (UNITS)", " (" + str(att_v["units"]) + ")").replace(" ()", "")
+                if isinstance(k2, str) is True:
+                    att_v[k1] = k2.replace(" (UNITS)", " (" + str(att_v["units"]) + ")")
+                    att_v[k1] = att_v[k1].replace(" ()", "")
         att_v = dict(sorted(att_v.items()))
         # remove attributes
         for k in list(da.attrs.keys()):
@@ -238,7 +166,6 @@ def f01d_pr_change_process(
         da.attrs.update(**att_v)
         # rename variable
         da = da.rename(output["variable"][var]["name"])
-        print(json__dumps(da.attrs, indent=4))
         ds_o[output["variable"][var]["name"]] = da
     # global attributes
     att_g = merge_dict(ds_x0.attrs, ds_y.attrs, var1_data["dataset"], var2_data["dataset"])

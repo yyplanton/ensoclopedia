@@ -9,7 +9,6 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
-from json import dumps as json__dumps
 
 # local functions
 from ensoclopedia.wrapper.dataarray_tools import linear_regression
@@ -65,7 +64,7 @@ defaults = {
         "filename": "data_output/figure_01c.nc",
         "kwargs_to_netcdf": {},
         "variable": {
-            "slope": {
+            "sst--tas_mean": {
                 "name": "f01c--cur_y",
                 "attributes": {
                     "short_name": "slope",
@@ -73,6 +72,7 @@ defaults = {
                     "x_nam": "month",
                     "y_nam": "GSAT regressed on normalized N3.4 rSSTA (UNITS)",
                 },
+                "variable": "slope",
             },
         },
     },
@@ -104,7 +104,7 @@ def f01c_gsat_reg_on_enso_process(
     variable_x = None
     if isinstance(var1_data, dict) is True and "variable" in list(var1_data):
         variable_x = copy__deepcopy(var1_data["variable"])
-    ds_x0 = netcdf_reader(**var1_data)
+    ds_x = netcdf_reader(**var1_data)
     variable_y = None
     if isinstance(var2_data, dict) is True and "variable" in list(var2_data):
         variable_y = copy__deepcopy(var2_data["variable"])
@@ -113,60 +113,43 @@ def f01c_gsat_reg_on_enso_process(
     # -- Process
     #
     # perform processing steps for ds_x
-    ds_x = processor(ds_x0, var1_preprocess, variable=variable_x)
-    # print("after processor ds_x")
-    # print(json__dumps(ds_x.attrs, indent=4))
-    # print(list(ds_x.keys()))
-    # for k in list(ds_x.keys()):
-    #     print(str(k).rjust(10), ds_x[k].shape, float(ds_x[k].min()), float(ds_x[k].max()))
-    #     # print(ds_x[k]["year"])
-    #     print(json__dumps(ds_x[k].attrs, indent=4))
-    # stop
+    ds_x = processor(ds_x, var1_preprocess, variable=variable_x)
     # perform processing steps for ds_y
     ds_y = processor(ds_y, var2_preprocess, variable=variable_y)
-    # print("after processor ds_y")
-    # print(json__dumps(ds_y.attrs, indent=4))
-    # print(list(ds_y.keys()))
-    # for k in list(ds_y.keys()):
-    #     print(str(k).rjust(10), ds_y[k].shape, float(ds_y[k].min()), float(ds_y[k].max()))
-    #     # print(ds_y[k]["year"])
-    #     print(json__dumps(ds_y[k].attrs, indent=4))
     #
     # -- Diagnostic
     #
     # regress ds_y onto ds_x
-    var_x, var_y = variable_x[0], variable_y[0]
-    ds_reg = linear_regression(ds_x[var_x], ds_y[var_y], dim="year")
-    # print("after linear_regression ds_reg")
-    # print(json__dumps(ds_reg.attrs, indent=4))
-    # print(list(ds_reg.keys()))
-    # for k in list(ds_reg.keys()):
-    #     print(str(k).rjust(10), ds_reg[k].shape)
-    #     print(str(k).rjust(10), ds_reg[k].dims)
-    #     print(str(k).rjust(10), ds_reg[k]["month"])
-    #     print(json__dumps(ds_reg[k].attrs, indent=4))
+    ds_reg = {}
+    for var_x in list(ds_x.keys()):
+        for var_y in list(ds_y.keys()):
+            ds_reg[str(var_x) + "--" + str(var_y)] = linear_regression(ds_x[var_x], ds_y[var_y], dim="year")
     #
     # -- Save in netCDF
     #
     # select output variables
     ds_o = {}
-    for var in output["variable"]:
+    for var in list(output["variable"].keys()):
         # output array
         da = ds_reg[var]
+        if isinstance(da, dataset_wrapper) is True and "variable" in list(output["variable"][var].keys()):
+            da = da[output["variable"][var]["variable"]]
         # remove unused coordinates
         for k in list(set(list(da.coords.keys())) - set(da.dims)):
             del da[k]
         # variable attributes
         att_v = copy__deepcopy(output["variable"][var]["attributes"])
         att_v["epoch"] = ""
-        for k in get_time_bounds(ds_x0):
+        for k in get_time_bounds(ds_x):
             if att_v["epoch"] != "":
                 att_v["epoch"] += " to "
             att_v["epoch"] += "-".join(k.split("-")[:2])
         # update attributes
         if "units" in list(att_v.keys()):
             for k1, k2 in att_v.items():
-                att_v[k1] = k2.replace(" (UNITS)", " (" + str(att_v["units"]) + ")").replace(" ()", "")
+                if isinstance(k2, str) is True:
+                    att_v[k1] = k2.replace(" (UNITS)", " (" + str(att_v["units"]) + ")")
+                    att_v[k1] = att_v[k1].replace(" ()", "")
         att_v = dict(sorted(att_v.items()))
         # remove attributes
         for k in list(da.attrs.keys()):
@@ -177,7 +160,7 @@ def f01c_gsat_reg_on_enso_process(
         da = da.rename(output["variable"][var]["name"])
         ds_o[output["variable"][var]["name"]] = da
     # global attributes
-    att_g = merge_dict(ds_x0.attrs, ds_y.attrs, var1_data["dataset"], var2_data["dataset"])
+    att_g = merge_dict(ds_x.attrs, ds_y.attrs, var1_data["dataset"], var2_data["dataset"])
     for k in list(att_g):
         if k.lower() in ["comment", "conventions", "history", "licence", "supplementary_information"]:
             del att_g[k]

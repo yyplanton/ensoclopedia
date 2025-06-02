@@ -10,7 +10,6 @@
 # basic python package
 from copy import deepcopy as copy__deepcopy
 from inspect import stack as inspect__stack
-from json import dumps as json__dumps
 from re import split as re__split
 from typing import Literal, Union, Hashable
 
@@ -58,7 +57,6 @@ def cf_dim_to_dim(
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
     :param cf_dim: {"X", "Y", "T", "Z"}
         Name of a CF dimension
     **kwargs - Discarded
@@ -108,7 +106,6 @@ def check_dim(
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
     :param dim: Hashable or str
         Dimension name
     **kwargs - Discarded
@@ -131,6 +128,19 @@ def check_dim(
 
 
 def check_multidimensional_coordinates(ds: Union[array_wrapper, dataset_wrapper], **kwargs) -> bool:
+    """
+    Check if input object uses multidimensional coordinates (e.g., longitude[y, x]).
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: bool
+        True is input object uses multidimensional coordinates
+    """
     dim_lat = cf_dim_to_dim(ds, "Y")
     dim_lon = cf_dim_to_dim(ds, "X")
     bool_o = False
@@ -155,7 +165,6 @@ def check_time_bounds(
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
     :param time_bounds: tuple[str]
         Time bounds desired
     :param side: {"lower", "upper"}
@@ -217,7 +226,6 @@ def constant_mask(
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
     **kwargs - Discarded
 
     Output:
@@ -262,7 +270,6 @@ def get_season(
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
     :param season: {"DJF", "JFM", "FMA", "MAM", "AMJ", "MJJ", "JJA", "JAS", "ASO", "SON", "OND", "NDJ"}
         Name of a season
         Default is 'NDJ'
@@ -329,7 +336,6 @@ def get_time_bounds(
     Input:
     ------
     :param ds: xarray.DataArray or xarray.Dataset
-        DataArray or Dataset
     **kwargs - Discarded
 
     Output:
@@ -350,6 +356,23 @@ def get_variables(
         ds: Union[array_wrapper, dataset_wrapper],
         variable: list[str] = None,
         **kwargs) -> Union[list[str], None]:
+    """
+    Check and list variables in xarray Dataset.
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+    :param variable: variable: list[str], optional
+        List of variables in ds if it is xarray.Dataset; e.g., variable = ["ts"]
+        If ds is xarray.Dataset, variable should be provided
+        Default is None
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: list[str] or None
+        Input variable or list of variables from ds
+    """
     list_variables = None
     if isinstance(ds, dataset_wrapper) is True:
         if tools.is_variables(variable) is True:
@@ -578,7 +601,24 @@ def remove_unused_coordinates(ds: Union[array_wrapper, dataset_wrapper]) -> Unio
 
 def roll_longitude(
         ds: Union[array_wrapper, dataset_wrapper],
-        new_lon_min: Union[float, int, None] = None) -> Union[array_wrapper, dataset_wrapper]:
+        new_lon_min: Union[float, int, None] = None,
+        **kwargs) -> Union[array_wrapper, dataset_wrapper]:
+    """
+    Roll longitude dimension, either to ensure that longitude ranges from 0 to 360E or to start from new_lon_min (e.g.,
+    new_lon_min = -70, longitude = [-70; 290])
+
+    Input:
+    ------
+    :param ds: xarray.DataArray or xarray.Dataset
+    :param new_lon_min: float or int or None
+        New minimum longitude
+    **kwargs - Discarded
+
+    Output:
+    -------
+    :return: xarray.DataArray or xarray.Dataset
+        New object (as input) with rolled longitude
+    """
     dim_lon = cf_dim_to_dim(ds, "X")
     if tools.is_dim(dim_lon) is True:
         # update longitude
@@ -590,10 +630,10 @@ def roll_longitude(
             # ensure that longitude ranges from 0 to 360E
             ds = ds.assign_coords({dim_lon: (360 + (ds[dim_lon] % 360)) % 360})
         # roll so that the first longitude of the dimension is the minimum longitude
-        try:
+        if check_multidimensional_coordinates(ds) is False:
             # normal roll method
             ds = ds.roll({dim_lon: -ds[dim_lon].argmin().values}, roll_coords=True)
-        except:
+        else:
             # for multidimensional coordinates (e.g., curvilinear grids)
             # average lon along Y
             arr_lon = ds[dim_lon]

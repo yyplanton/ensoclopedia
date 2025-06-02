@@ -1,6 +1,6 @@
 # -*- coding:UTF-8 -*-
 # ---------------------------------------------------------------------------------------------------------------------#
-# Compute precipitation change related to ENSO during NDJ
+# Compute precipitation change related to ENSO during NDJ preceding ENSO
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -9,7 +9,6 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
-from json import dumps as json__dumps
 
 # local functions
 from ensoclopedia.wrapper.dataarray_tools import linear_regression
@@ -70,13 +69,14 @@ defaults = {
         "filename": "data_output/figure_01e.nc",
         "kwargs_to_netcdf": {},
         "variable": {
-            "slope": {
+            "sst--precip": {
                 "name": "f01e--map_c",
                 "attributes": {
                     "short_name": "slope",
                     "units": "%",
                     "map_c_nam": "NDJ PR change regressed on normalized NDJ N3.4 rSSTA (UNITS)",
                 },
+                "variable": "slope",
             },
         },
     },
@@ -115,37 +115,33 @@ def f01e_pr_change_process(
     if isinstance(var2_data, dict) is True and "variable" in list(var2_data):
         variable_y = copy__deepcopy(var2_data["variable"])
     ds_y0 = netcdf_reader(**var2_data)
-    for k1 in list(ds_y0.keys()):
-        for k2 in list(ds_y0[k1].attrs):
-            if k2 in ["actual_range", "add_offset", "precision", "scale_factor", "valid_range"]:
-                del ds_y0[k1].attrs[k2]
     #
     # -- Process
     #
     # perform processing steps for ds_x
-    print("processor", variable_x)
     ds_x = processor(ds_x0, var1_preprocess, variable=variable_x)
     # perform processing steps for ds_y
-    print("processor", variable_y)
     ds_y1 = processor(ds_y0, var2_preprocess, variable=variable_y)
-    print("processor", variable_y)
     ds_y2 = processor(ds_y0, var3_preprocess, variable=variable_y)
     ds_y = ds_y1 * 100 / ds_y2
-    # ds_y = ds_y1
     #
     # -- Diagnostic
     #
     # regress ds_y onto ds_x
-    var_x, var_y = variable_x[0], variable_y[0]
-    ds_reg = linear_regression(ds_x[var_x], ds_y[var_y], dim="year")
+    ds_reg = {}
+    for var_x in list(ds_x.keys()):
+        for var_y in list(ds_y.keys()):
+            ds_reg[str(var_x) + "--" + str(var_y)] = linear_regression(ds_x[var_x], ds_y[var_y], dim="year")
     #
     # -- Save in netCDF
     #
     # select output variables
     ds_o = {}
-    for var in output["variable"]:
+    for var in list(output["variable"].keys()):
         # output array
         da = ds_reg[var]
+        if isinstance(da, dataset_wrapper) is True and "variable" in list(output["variable"][var].keys()):
+            da = da[output["variable"][var]["variable"]]
         # remove unused coordinates
         for k in list(set(list(da.coords.keys())) - set(da.dims)):
             del da[k]
@@ -159,7 +155,9 @@ def f01e_pr_change_process(
         # update attributes
         if "units" in list(att_v.keys()):
             for k1, k2 in att_v.items():
-                att_v[k1] = k2.replace(" (UNITS)", " (" + str(att_v["units"]) + ")").replace(" ()", "")
+                if isinstance(k2, str) is True:
+                    att_v[k1] = k2.replace(" (UNITS)", " (" + str(att_v["units"]) + ")")
+                    att_v[k1] = att_v[k1].replace(" ()", "")
         att_v = dict(sorted(att_v.items()))
         # remove attributes
         for k in list(da.attrs.keys()):

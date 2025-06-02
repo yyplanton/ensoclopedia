@@ -12,11 +12,8 @@ from copy import deepcopy as copy__deepcopy
 from inspect import getmembers as inspect__getmembers
 from inspect import isfunction as inspect__isfunction
 from inspect import stack as inspect__stack
-from json import dumps as json__dumps
 from typing import Hashable, Literal, Union
 from sys import modules as sys__modules
-
-from xarray.util.generate_aggregations import skipna
 
 # local functions
 from ensoclopedia.wrapper import tools
@@ -381,12 +378,10 @@ def netcdf_selector(
                 # e.g., initial longitude = [0; 360], desired = [-60; 30], lon_min = -70, new longitude = [-70; 290]
                 ds = xt.roll_longitude(ds, lon_min)
             # select
-            print("netcdf_selector", bounds)
             if xt.check_multidimensional_coordinates(ds) is False:
                 # normal selection method
                 ds = ds.sel(indexers=coordinates1, **kwargs_sel)
             else:
-                print("netcdf_selector multidimensional coordinates", bounds)
                 # for multidimensional coordinates (e.g., curvilinear grids)
                 # select time
                 if tools.is_dim(dim_time) is True and dim_time in list(coordinates1.keys()):
@@ -494,13 +489,7 @@ def processor(
             tools.print_fail(inspect__stack(), message, fail_i=False)
             continue
         # apply processor
-        print("processor", process)
-        v1 = list(ds.keys())[0]
-        print("in ", v1, ds[v1].shape, float(ds[v1].min()), float(ds[v1].max()), list(ds.coords))
-        print(ds.coords)
         ds = globals()[process](ds, variable=variable, **processors[k1])
-        print("out", v1, ds[v1].shape, float(ds[v1].min()), float(ds[v1].max()), list(ds.coords))
-        print(ds.coords)
         if ds is None:
             break
     return ds
@@ -694,11 +683,5 @@ def seasonal_cycle(
         ds = ds.groupby(str(dim_time) + ".month", **kwargs_groupby)
         # mean along the time dimension
         ds = ds.mean(dim=dim_time, **kwargs_mean)
-    return ds
-
-
-def select_variable(ds: Union[array_wrapper, dataset_wrapper], variable: str, **kwargs) -> array_wrapper:
-    if isinstance(ds, dataset_wrapper) is True:
-        ds = ds[variable]
     return ds
 # ---------------------------------------------------------------------------------------------------------------------#

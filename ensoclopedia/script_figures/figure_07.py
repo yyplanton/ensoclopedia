@@ -130,7 +130,7 @@ def f07_plot(
                     arr = ds[k3]
                     if k3 == "time":
                         # convert time to year fraction
-                        arr = get_time_plot(arr.to_index(), arr.dt.calendar)
+                        arr = get_time_plot(arr.to_index())
                 if "map_" not in k1:
                     arr = [arr]
                 put_in_dict(figure_data, arr, grp, panel, k1)
@@ -162,7 +162,7 @@ def f07_plot(
     # default outputs if not provided
     figure_format = default_figure_format(figure)
     figure_name = default_figure_name(figure, __file__)
-    panel_sizes = default_panel_sizes(figure)
+    panel_sizes = default_panel_sizes(figure, figure_data)
     # plot using basic template
     list_groups = list(figure_data.keys())
     fig_basic(figure_data, list_groups, 1, figure_axes, figure_format, figure_name, panel_sizes)

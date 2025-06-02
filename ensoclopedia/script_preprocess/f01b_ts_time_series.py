@@ -1,6 +1,6 @@
 # -*- coding:UTF-8 -*-
 # ---------------------------------------------------------------------------------------------------------------------#
-# Compute surface temperature time series
+# Compute GSAT time series
 # ---------------------------------------------------------------------------------------------------------------------#
 
 
@@ -9,8 +9,6 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
-from json import dumps as json__dumps
-from typing import Union
 
 # local functions
 from ensoclopedia.wrapper.tools import none_to_default_dict

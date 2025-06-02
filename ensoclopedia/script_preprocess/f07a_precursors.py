@@ -9,7 +9,6 @@
 # ---------------------------------------------------#
 # basic python package
 from copy import deepcopy as copy__deepcopy
-from json import dumps as json__dumps
 
 # local functions
 from ensoclopedia.wrapper.dataarray_tools import linear_regression
@@ -148,12 +147,6 @@ def f07a_precursors_process(
     if isinstance(var1_data, dict) is True and "variable" in list(var1_data):
         variable_x = copy__deepcopy(var1_data["variable"])
     ds_x0 = netcdf_reader(**var1_data)
-    # print("after netcdf_reader ds_x0")
-    # print(json__dumps(ds_x0.attrs, indent=4))
-    # print(list(ds_x0.keys()))
-    # for k in list(ds_x0.keys()):
-    #     print(str(k).rjust(10), ds_x0[k].shape, ds_x0[k].dims, float(ds_x0[k].min()), float(ds_x0[k].max()))
-    #     print(json__dumps(ds_x0[k].attrs, indent=4))
     variable_y = None
     if isinstance(var2_data, dict) is True and "variable" in list(var2_data):
         variable_y = copy__deepcopy(var2_data["variable"])
@@ -162,32 +155,13 @@ def f07a_precursors_process(
         for k2 in list(ds_y0[k1].attrs):
             if k2 in ["_FillValue", "interval_operation", "interval_write", "missing_value"]:
                 del ds_y0[k1].attrs[k2]
-    # print("after netcdf_reader ds_y0")
-    # print(json__dumps(ds_y0.attrs, indent=4))
-    # print(list(ds_y0.keys()))
-    # for k in list(ds_y0.keys()):
-    #     print(str(k).rjust(10), ds_y0[k].shape, ds_y0[k].dims, float(ds_y0[k].min()), float(ds_y0[k].max()))
-    #     print(json__dumps(ds_y0[k].attrs, indent=4))
-    # stop
     #
     # -- Process
     #
     # perform processing steps for ds_x
     ds_x = processor(ds_x0, var1_preprocess, variable=variable_x)
-    print("after processor ds_x")
-    # print(json__dumps(ds_x.attrs, indent=4))
-    # print(list(ds_x.keys()))
-    # for k in list(ds_x.keys()):
-    #     print(str(k).rjust(10), ds_x[k].shape, float(ds_x[k].min()), float(ds_x[k].max()))
-    #     print(json__dumps(ds_x[k].attrs, indent=4))
     # perform processing steps for ds_y
     ds_y1 = processor(ds_y0, var2_preprocess, variable=variable_y)
-    print("after processor ds_y")
-    # print(json__dumps(ds_y1.attrs, indent=4))
-    # print(list(ds_y1.keys()))
-    # for k in list(ds_y1.keys()):
-    #     print(str(k).rjust(10), ds_y1[k].shape, float(ds_y1[k].min()), float(ds_y1[k].max()))
-    #     print(json__dumps(ds_y1[k].attrs, indent=4))
     ds_y = {}
     for reg in list(var3_preprocess.keys()):
         # process region
@@ -209,7 +183,7 @@ def f07a_precursors_process(
     #
     # select output variables
     ds_o = {}
-    for var in output["variable"]:
+    for var in list(output["variable"].keys()):
         # output array
         da = ds_reg[var]
         if isinstance(da, dataset_wrapper) is True and "variable" in list(output["variable"][var].keys()):
